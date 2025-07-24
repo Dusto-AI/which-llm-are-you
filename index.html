@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Which LLM Are You?</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .intro {
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+
+        .quiz-container {
+            display: none;
+        }
+
+        .question {
+            text-align: left;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .question h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .options {
+            display: grid;
+            gap: 10px;
+        }
+
+        .option {
+            padding: 15px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .option.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .results {
+            display: none;
+            text-align: center;
+        }
+
+        .result-model {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .personality-traits {
+            text-align: left;
+            margin: 30px 0;
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+        }
+
+        .trait {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .trait:last-child {
+            border-bottom: none;
+        }
+
+        .trait-bar {
+            width: 200px;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .trait-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        .comparison {
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .model-match {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .trait-bar {
+                width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Intro Screen -->
+        <div class="intro" id="intro">
+            <h1>Which LLM Are You?</h1>
+            <p class="subtitle">Discover your AI personality type based on analysis of real model behaviors in collaborative tasks</p>
+            <p>This quiz analyzes traits like leadership style, failure recovery, task delegation, and collaboration patterns observed in multi-agent LLM conversations.</p>
+            <br>
+            <button class="btn" onclick="startQuiz()">Start Quiz</button>
+        </div>
+
+        <!-- Quiz -->
+        <div class="quiz-container" id="quiz">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress"></div>
+            </div>
+            
+            <div id="question-container"></div>
+            
+            <div style="margin-top: 30px;">
+                <button class="btn" id="nextBtn" onclick="nextQuestion()" disabled>Next Question</button>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results" id="results">
+            <h2>Your Result:</h2>
+            <div class="result-model" id="resultModel"></div>
+            <p id="resultDescription"></p>
+            
+            <div class="personality-traits">
+                <h3>Your Personality Profile:</h3>
+                <div id="traits"></div>
+            </div>
+            
+            <div class="comparison">
+                <h3>How you match with each model:</h3>
+                <div id="modelComparison"></div>
+            </div>
+            
+            <button class="btn" onclick="restartQuiz()">Take Quiz Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Model personality profiles - you can replace this with your actual analysis data
+        const models = {
+            'Model 1': {
+                name: 'OpenAI o3',
+                description: 'You approach problems systematically and prefer to take charge when things go wrong. You believe in clear processes and careful delegation.',
+                traits: {
+                    'Leadership': 85,
+                    'Failure Recovery': 75,
+                    'Task Delegation': 90,
+                    'Risk Taking': 45,
+                    'Collaboration': 70,
+                    'Adaptability': 60
+                },
+                characteristics: [
+                    'Takes initiative in group settings',
+                    'Plans thoroughly before acting',
+                    'Delegates tasks based on expertise',
+                    'Recovers from setbacks methodically'
+                ]
+            },
+            'Model 2': {
+                name: 'Claude Opus 4',
+                description: 'You excel at working with others and adapting to changing circumstances. You prefer collaborative solutions over individual heroics.',
+                traits: {
+                    'Leadership': 60,
+                    'Failure Recovery': 85,
+                    'Task Delegation': 70,
+                    'Risk Taking': 70,
+                    'Collaboration': 95,
+                    'Adaptability': 90
+                },
+                characteristics: [
+                    'Bounces back quickly from failures',
+                    'Seeks input from team members',
+                    'Adapts strategy based on feedback',
+                    'Comfortable with uncertainty'
+                ]
+            },
+            'Model 3': {
+                name: 'Gemini 2.5',
+                description: 'You\'re willing to take calculated risks and think outside the box. You prefer to work independently but can lead when necessary.',
+                traits: {
+                    'Leadership': 75,
+                    'Failure Recovery': 60,
+                    'Task Delegation': 55,
+                    'Risk Taking': 90,
+                    'Collaboration': 50,
+                    'Adaptability': 85
+                },
+                characteristics: [
+                    'Pursues innovative solutions',
+                    'Comfortable with ambiguous situations',
+                    'Prefers individual work over committees',
+                    'Learns from failures but takes time to process'
+                ]
+            },
+            'Model 4': {
+                name: 'Claude Sonnet 3.7',
+                description: 'You provide consistent, reliable support to team efforts. You prefer clear roles and stable processes over rapid changes.',
+                traits: {
+                    'Leadership': 40,
+                    'Failure Recovery': 70,
+                    'Task Delegation': 80,
+                    'Risk Taking': 30,
+                    'Collaboration': 85,
+                    'Adaptability': 45
+                },
+                characteristics: [
+                    'Provides reliable, consistent output',
+                    'Supports team decisions loyally',
+                    'Prefers proven methods',
+                    'Maintains team morale during difficulties'
+                ]
+            }
+        };
+
+        // Quiz questions - replace with questions based on your analysis
+        const questions = [
+            {
+                question: "When your team encounters a major setback, what's your first instinct?",
+                options: [
+                    { text: "Take charge and reorganize the approach", scores: { 'Model 1': 3, 'Model 2': 1, 'Model 3': 2, 'Model 4': 0 } },
+                    { text: "Gather everyone to brainstorm solutions together", scores: { 'Model 1': 1, 'Model 2': 3, 'Model 3': 0, 'Model 4': 2 } },
+                    { text: "Step back and analyze what went wrong independently", scores: { 'Model 1': 0, 'Model 2': 1, 'Model 3': 3, 'Model 4': 1 } },
+                    { text: "Support the team emotionally and help maintain focus", scores: { 'Model 1': 0, 'Model 2': 2, 'Model 3': 0, 'Model 4': 3 } }
+                ]
+            },
+            {
+                question: "How do you prefer to delegate tasks in a group project?",
+                options: [
+                    { text: "Assign specific roles based on each person's strengths", scores: { 'Model 1': 3, 'Model 2': 2, 'Model 3': 1, 'Model 4': 2 } },
+                    { text: "Let people choose what they want to work on", scores: { 'Model 1': 1, 'Model 2': 3, 'Model 3': 2, 'Model 4': 1 } },
+                    { text: "Take on the most challenging parts yourself", scores: { 'Model 1': 2, 'Model 2': 0, 'Model 3': 3, 'Model 4': 0 } },
+                    { text: "Ensure everyone has manageable, clear responsibilities", scores: { 'Model 1': 2, 'Model 2': 1, 'Model 3': 0, 'Model 4': 3 } }
+                ]
+            },
+            {
+                question: "When facing an uncertain situation with limited information:",
+                options: [
+                    { text: "Create a structured plan with contingencies", scores: { 'Model 1': 3, 'Model 2': 1, 'Model 3': 1, 'Model 4': 2 } },
+                    { text: "Seek input from others and adapt as you learn", scores: { 'Model 1': 1, 'Model 2': 3, 'Model 3': 2, 'Model 4': 1 } },
+                    { text: "Trust your instincts and pivot quickly if needed", scores: { 'Model 1': 0, 'Model 2': 2, 'Model 3': 3, 'Model 4': 0 } },
+                    { text: "Wait for more information before committing", scores: { 'Model 1': 2, 'Model 2': 0, 'Model 3': 0, 'Model 4': 3 } }
+                ]
+            },
+            {
+                question: "Your preferred leadership style is:",
+                options: [
+                    { text: "Direct and organized - set clear expectations", scores: { 'Model 1': 3, 'Model 2': 1, 'Model 3': 2, 'Model 4': 1 } },
+                    { text: "Collaborative - facilitate group decisions", scores: { 'Model 1': 1, 'Model 2': 3, 'Model 3': 0, 'Model 4': 2 } },
+                    { text: "Lead by example - show rather than tell", scores: { 'Model 1': 2, 'Model 2': 1, 'Model 3': 3, 'Model 4': 0 } },
+                    { text: "Supportive - help others succeed in their roles", scores: { 'Model 1': 0, 'Model 2': 2, 'Model 3': 0, 'Model 4': 3 } }
+                ]
+            },
+            {
+                question: "When you make a mistake in a collaborative setting:",
+                options: [
+                    { text: "Quickly assess the impact and create a recovery plan", scores: { 'Model 1': 3, 'Model 2': 2, 'Model 3': 1, 'Model 4': 1 } },
+                    { text: "Openly discuss it with the team and adjust together", scores: { 'Model 1': 1, 'Model 2': 3, 'Model 3': 0, 'Model 4': 2 } },
+                    { text: "Learn from it privately and implement changes", scores: { 'Model 1': 0, 'Model 2': 1, 'Model 3': 3, 'Model 4': 1 } },
+                    { text: "Acknowledge it and focus on preventing future issues", scores: { 'Model 1': 2, 'Model 2': 0, 'Model 3': 1, 'Model 4': 3 } }
+                ]
+            }
+        ];
+
+        let currentQuestion = 0;
+        let scores = { 'Model 1': 0, 'Model 2': 0, 'Model 3': 0, 'Model 4': 0 };
+        let userTraits = { 'Leadership': 0, 'Failure Recovery': 0, 'Task Delegation': 0, 'Risk Taking': 0, 'Collaboration': 0, 'Adaptability': 0 };
+
+        function startQuiz() {
+            document.getElementById('intro').style.display = 'none';
+            document.getElementById('quiz').style.display = 'block';
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const question = questions[currentQuestion];
+            const container = document.getElementById('question-container');
+            
+            container.innerHTML = `
+                <div class="question">
+                    <h3>Question ${currentQuestion + 1} of ${questions.length}</h3>
+                    <p>${question.question}</p>
+                    <div class="options">
+                        ${question.options.map((option, index) => `
+                            <div class="option" onclick="selectOption(${index})" data-index="${index}">
+                                ${option.text}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            updateProgress();
+            document.getElementById('nextBtn').disabled = true;
+        }
+
+        function selectOption(optionIndex) {
+            // Remove previous selection
+            document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+            
+            // Add selection to clicked option
+            document.querySelector(`[data-index="${optionIndex}"]`).classList.add('selected');
+            
+            // Store the selection
+            window.selectedOption = optionIndex;
+            document.getElementById('nextBtn').disabled = false;
+        }
+
+        function nextQuestion() {
+            // Add scores for selected option
+            const question = questions[currentQuestion];
+            const selectedOption = question.options[window.selectedOption];
+            
+            for (let model in selectedOption.scores) {
+                scores[model] += selectedOption.scores[model];
+            }
+            
+            currentQuestion++;
+            
+            if (currentQuestion < questions.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestion) / questions.length) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+        }
+
+        function showResults() {
+            // Find the model with highest score
+            let topModel = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+            
+            // Calculate user traits based on their answers and winning model
+            const modelData = models[topModel];
+            for (let trait in userTraits) {
+                userTraits[trait] = modelData.traits[trait] + (Math.random() * 20 - 10); // Add some variation
+                userTraits[trait] = Math.max(0, Math.min(100, userTraits[trait])); // Keep in bounds
+            }
+            
+            document.getElementById('quiz').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+            
+            document.getElementById('resultModel').textContent = modelData.name;
+            document.getElementById('resultDescription').textContent = modelData.description;
+            
+            // Show personality traits
+            const traitsContainer = document.getElementById('traits');
+            traitsContainer.innerHTML = Object.entries(userTraits).map(([trait, value]) => `
+                <div class="trait">
+                    <span><strong>${trait}:</strong></span>
+                    <div class="trait-bar">
+                        <div class="trait-fill" style="width: ${value}%"></div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Show model comparison
+            const comparisonContainer = document.getElementById('modelComparison');
+            const totalQuestions = questions.length * 3; // Max possible score per model
+            comparisonContainer.innerHTML = Object.entries(scores).map(([model, score]) => `
+                <div class="model-match">
+                    <span>${models[model].name}:</span>
+                    <span>${Math.round((score / totalQuestions) * 100)}% match</span>
+                </div>
+            `).join('');
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            scores = { 'Model 1': 0, 'Model 2': 0, 'Model 3': 0, 'Model 4': 0 };
+            userTraits = { 'Leadership': 0, 'Failure Recovery': 0, 'Task Delegation': 0, 'Risk Taking': 0, 'Collaboration': 0, 'Adaptability': 0 };
+            
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('intro').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
